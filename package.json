@@ -13,7 +13,10 @@
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
+    "@awesome.me/kit-4fb5b5f5b6": "^1.0.7",
     "@faker-js/faker": "^9.6.0",
+    "@fortawesome/fontawesome-svg-core": "^7.0.0",
+    "@fortawesome/react-fontawesome": "^0.2.3",
     "@ory/client": "^1.21.1",
     "@ory/client-fetch": "^1.21.1",
     "@tailwindcss/vite": "^4.0.6",
@@ -32,6 +35,7 @@
     "@tanstack/eslint-config": "^0.1.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
+    "@types/node": "^24.2.0",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",

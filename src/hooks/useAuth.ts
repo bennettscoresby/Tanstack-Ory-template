@@ -11,6 +11,17 @@ const ory = new FrontendApi(
     }),
 )
 
+// Global auth state to persist across component mounts
+let globalAuthState = {
+    session: null as Session | null,
+    logoutUrl: null as string | null,
+    loading: true,
+    initialized: false
+}
+
+// Subscribers for state changes
+const subscribers = new Set<() => void>()
+
 export interface AuthState {
     session: Session | null
     logoutUrl: string | null
@@ -20,56 +31,84 @@ export interface AuthState {
     refetchSession: () => Promise<void>
 }
 
-export function useAuth(): AuthState {
-    // State variables
-    const [session, setSession] = useState<Session | null>(null)
-    const [logoutUrl, setLogoutUrl] = useState<string | null>(null)
-    const [loading, setLoading] = useState(true)
+// Function to notify all subscribers of state changes
+const notifySubscribers = () => {
+    subscribers.forEach(callback => callback())
+}
 
+// Function to update global auth state
+const updateGlobalAuthState = (updates: Partial<typeof globalAuthState>) => {
+    globalAuthState = { ...globalAuthState, ...updates }
+    notifySubscribers()
+}
+
+export function useAuth(): AuthState {
+    // Local state that syncs with global state
+    const [localState, setLocalState] = useState(globalAuthState)
+
+    // Subscribe to global state changes
     useEffect(() => {
-        console.log(session)
-    }, [session])
+        const updateLocalState = () => setLocalState({ ...globalAuthState })
+        subscribers.add(updateLocalState)
+
+        return () => {
+            subscribers.delete(updateLocalState)
+        }
+    }, [])
 
     // Fetch session function
     const fetchSession = async () => {
         try {
-            setLoading(true)
+            updateGlobalAuthState({ loading: true })
             // Browser automatically includes cookies in the request
             const sessionResponse = await ory.toSession()
-            setSession(sessionResponse)
 
             try {
                 const { logout_url } = await ory.createBrowserLogoutFlow()
-                setLogoutUrl(logout_url)
+                updateGlobalAuthState({
+                    session: sessionResponse,
+                    logoutUrl: logout_url,
+                    loading: false,
+                    initialized: true
+                })
             } catch (logoutError) {
                 console.error("Error creating logout flow:", logoutError)
+                updateGlobalAuthState({
+                    session: sessionResponse,
+                    logoutUrl: null,
+                    loading: false,
+                    initialized: true
+                })
             }
         } catch (err) {
-            setSession(null)
-            setLogoutUrl(null)
-            // Don't automatically redirect - let individual routes handle this
-        } finally {
-            setLoading(false)
+            updateGlobalAuthState({
+                session: null,
+                logoutUrl: null,
+                loading: false,
+                initialized: true
+            })
         }
     }
 
     // Logout function
     const logout = () => {
-        if (logoutUrl) {
-            window.location.href = logoutUrl
+        if (localState.logoutUrl) {
+            window.location.href = localState.logoutUrl
         }
     }
 
-    // Initial session fetch
+    // Initial session fetch (only if not already initialized)
     useEffect(() => {
-        fetchSession()
+        if (!globalAuthState.initialized) {
+            fetchSession()
+        }
     }, [])
 
     return {
-        session,
-        logoutUrl,
-        loading,
-        isAuthenticated: !!session?.identity,
+        session: localState.session,
+        logoutUrl: localState.logoutUrl,
+        loading: localState.loading,
+        isAuthenticated: !!localState.session?.identity,
         logout,
         refetchSession: fetchSession,
     }
