@@ -1,0 +1,14 @@
+# Override file for local development
+# This file is automatically loaded by docker-compose
+version: '3.8'
+
+services:
+  frontend:
+    environment:
+      # Override environment variables for local development
+      - VITE_ORY_SDK_URL=http://localhost:4000
+      # Add any other local environment variables here
+    # Uncomment to add volume mounts for development
+    # volumes:
+    #   - .:/app
+    #   - /app/node_modules

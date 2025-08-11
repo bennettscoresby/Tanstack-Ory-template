@@ -32,7 +32,6 @@ This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
 
 ## Linting & Formatting
 
-
 This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
 
 ```bash
@@ -40,6 +39,93 @@ npm run lint
 npm run format
 npm run check
 ```
+
+## Docker
+
+This project includes Docker support for both development and production environments.
+
+### Prerequisites
+
+- Docker and Docker Compose installed on your system
+- FontAwesome Pro license (configured in `.npmrc`)
+
+### Production Build
+
+To build and run the production version:
+
+```bash
+# Build and start the production container
+docker-compose up --build
+
+# Or run in detached mode
+docker-compose up -d --build
+```
+
+The application will be available at `http://localhost:3000`.
+
+### Development with Docker
+
+For development with hot reloading:
+
+```bash
+# Start development environment
+docker-compose --profile dev up frontend-dev
+
+# Or build and start
+docker-compose --profile dev up --build frontend-dev
+```
+
+The development server will be available at `http://localhost:3001`.
+
+### Environment Configuration
+
+Create a `.env` file in the root directory to configure environment variables:
+
+```env
+# Ory configuration
+VITE_ORY_SDK_URL=http://localhost:4000
+
+# Add other environment variables as needed
+```
+
+### Docker Commands
+
+```bash
+# Build production image
+docker build -t merntanstackory .
+
+# Build development image
+docker build -f Dockerfile.dev -t merntanstackory:dev .
+
+# Run production container
+docker run -p 3000:80 merntanstackory
+
+# Run development container with volume mounts
+docker run -p 3001:3000 -v $(pwd):/app -v /app/node_modules merntanstackory:dev
+
+# View logs
+docker-compose logs -f frontend
+
+# Stop all services
+docker-compose down
+
+# Remove all containers and images
+docker-compose down --rmi all
+```
+
+### Health Checks
+
+Both production and development containers include health checks:
+
+- Production: `http://localhost:3000/health`
+- Development: `http://localhost:3001/`
+
+### Notes
+
+- The production build uses nginx to serve static files efficiently
+- The `.npmrc` file is copied to handle FontAwesome Pro authentication during build
+- Static assets are cached for optimal performance
+- The nginx configuration handles client-side routing for the SPA
 
 
 
